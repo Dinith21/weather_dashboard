@@ -1,6 +1,5 @@
 import bme280
 import smbus2
-from flask import Flask, jsonify
 
 port = 1
 address = 0x77
@@ -18,12 +17,3 @@ def read_sensor():
         "pressure": pressure,
         "humidity": humidity
     }
-
-app = Flask(__name__)
-
-@app.route("/api/sensor")
-def sensor():
-    data = read_sensor()
-    return jsonify(data)
-
-app.run(host="0.0.0.0", port=5000)
