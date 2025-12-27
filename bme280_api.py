@@ -21,7 +21,7 @@ def read_sensor():
 
 app = Flask(__name__)
 
-@app.route("/api/sensor")
+@app.route("/api/weather")
 def sensor():
     data = read_sensor()
     return jsonify(data)
