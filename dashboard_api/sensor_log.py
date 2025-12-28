@@ -30,14 +30,12 @@ def save_reading(temperature, pressure, humidity):
 
     conn.commit()
     conn.close()
-    
-while True:
-	reading = read_sensor()
-	temperature = reading["temperature"]
-	pressure = reading["pressure"]
-	humidity = reading["humidity"]
-	save_reading(temperature, pressure, humidity)
-	print("Saved new reading at ", datetime.datetime.now())
-	sleep(3600) # updates every hour
-	
-	#TODO: add a maximum number of updates stored
+
+reading = read_sensor()
+temperature = reading["temperature"]
+pressure = reading["pressure"]
+humidity = reading["humidity"]
+save_reading(temperature, pressure, humidity)
+print("Saved new reading at ", datetime.datetime.now())
+
+#TODO: add a maximum number of updates stored
