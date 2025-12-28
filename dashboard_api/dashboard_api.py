@@ -20,12 +20,12 @@ conn.close()
 
 app = Flask(__name__)
 
-@app.route("/api/sensor")
+@app.route("/sensor")
 def sensor():
     data = read_sensor()
     return jsonify(data)
     
-@app.route("/api/data")
+@app.route("/log")
 def get_data():
     conn = sqlite3.connect("sensor_data.db")
     c = conn.cursor()
