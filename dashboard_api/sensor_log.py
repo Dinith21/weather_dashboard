@@ -3,7 +3,7 @@ import datetime
 from time import sleep
 from sensor_read import read_sensor
 
-conn = sqlite3.connect("sensor_data.db")
+conn = sqlite3.connect("/home/pi/weather_dashboard/dashboard_api/sensor_data.db")
 c = conn.cursor()
 
 c.execute("""
