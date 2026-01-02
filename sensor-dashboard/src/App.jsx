@@ -27,8 +27,8 @@ export default function App() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch("/api/log/");
-      if (!res.ok) throw new Error("Failed to fetch /api/log/");
+      const res = await fetch("/api/log");
+      if (!res.ok) throw new Error("Failed to fetch /api/log");
       const data = await res.json();
 
       const parsed = Object.values(data).map((entry) => ({
