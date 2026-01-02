@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+// import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function App() {
   const [current, setCurrent] = useState(null);
@@ -62,7 +62,7 @@ export default function App() {
       </div>
 
       {/* History chart */}
-      <Card className="rounded-2xl shadow-sm">
+      {/* <Card className="rounded-2xl shadow-sm">
         <CardContent className="p-4">
           <h2 className="text-lg font-medium mb-4">History</h2>
           <div className="w-full h-80">
@@ -78,7 +78,7 @@ export default function App() {
             </ResponsiveContainer>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }
