@@ -64,55 +64,10 @@ export default function App() {
         <MetricCard title="Pressure" value={current?.pressure} unit="hPa" />
       </div>
 
-      <div className="chart-card">
-        <h2>History</h2>
-        <div className="chart-container">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={history}>
-              <XAxis 
-                dataKey="time" 
-                stroke="#6b7280"
-                style={{ fontSize: '12px' }}
-              />
-              <YAxis 
-                stroke="#6b7280"
-                style={{ fontSize: '12px' }}
-              />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="temperature" 
-                stroke="#ef4444" 
-                strokeWidth={3}
-                dot={{ fill: '#ef4444', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="humidity" 
-                stroke="#3b82f6" 
-                strokeWidth={3}
-                dot={{ fill: '#3b82f6', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="pressure" 
-                stroke="#10b981" 
-                strokeWidth={3}
-                dot={{ fill: '#10b981', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+      <div className="charts">
+        <ChartCard title="Temperature History" data={history} dataKey="temperature" color="#ef4444" unit="°C" />
+        <ChartCard title="Humidity History" data={history} dataKey="humidity" color="#3b82f6" unit="%" />
+        <ChartCard title="Pressure History" data={history} dataKey="pressure" color="#10b981" unit="hPa" />
       </div>
     </div>
   );
@@ -125,6 +80,46 @@ function MetricCard({ title, value, unit }) {
       <p className="metric-value">
         {value ?? "--"} <span>{unit}</span>
       </p>
+    </div>
+  );
+}
+
+function ChartCard({ title, data, dataKey, color, unit }) {
+  return (
+    <div className="chart-card">
+      <h2>{title}</h2>
+      <div className="chart-container">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <XAxis 
+              dataKey="time" 
+              stroke="#6b7280"
+              style={{ fontSize: '11px' }}
+            />
+            <YAxis 
+              stroke="#6b7280"
+              style={{ fontSize: '11px' }}
+            />
+            <Tooltip 
+              contentStyle={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+              }}
+              formatter={(value) => [`${value} ${unit}`, title.replace(' History', '')]}
+            />
+            <Line 
+              type="monotone" 
+              dataKey={dataKey}
+              stroke={color}
+              strokeWidth={3}
+              dot={{ fill: color, r: 3 }}
+              activeDot={{ r: 5 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
