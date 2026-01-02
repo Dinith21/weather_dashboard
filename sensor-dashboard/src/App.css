@@ -41,6 +41,7 @@ h1 {
 .metric-value {
   font-size: 32px;
   font-weight: 600;
+  color: #444;
 }
 
 .metric-value span {
