@@ -314,7 +314,7 @@ function SettingsModal({ settings, onSave, onClose }) {
             <div className="setting-group">
               <label>Temperature Unit</label>
               <div className="radio-group">
-                {['C', 'F', 'K'].map(unit => (
+                {['°C', '°F', 'K'].map(unit => (
                   <label key={unit} className="radio-label">
                     <input
                       type="radio"
@@ -323,7 +323,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                       checked={tempSettings.temperatureUnit === unit}
                       onChange={(e) => handleChange('temperatureUnit', e.target.value)}
                     />
-                    <span>°{unit}</span>
+                    <span>{unit}</span>
                   </label>
                 ))}
               </div>
