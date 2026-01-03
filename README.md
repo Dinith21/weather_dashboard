@@ -44,6 +44,14 @@ Connect BME280 sensor to Raspberry Pi as follows:
 - **SCL**: GPIO 3 (SCL)
 
 ### Running the Backend API
+Create a crontab job to update the sensor data every hour:
+```bash
+crontab -e
+```
+```crontab
+@hourly cd /home/pi/weather_dashboard/dashboard_api && /home/pi/venv/bin/python sensor_log.py >> /home/pi/weather_dashboard/cron.log 2>&1
+```
+
 Create a systemd service to run the Flask app using gunicorn:  
 `/etc/systemd/system/dashboard-api.service`
 ```ini
