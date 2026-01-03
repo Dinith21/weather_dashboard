@@ -35,10 +35,25 @@ export default function App() {
       if (!res.ok) throw new Error("Failed to fetch /api/log");
       const data = await res.json();
 
-      const parsed = Object.values(data).map((entry) => ({
-        ...entry,
-        time: new Date(entry.timestamp).toLocaleTimeString(),
-      }));
+      const parsed = Object.values(data).map((entry) => {
+        // Parse UTC timestamp and convert to local time
+        // API returns: "2025-12-29 21:00:02"
+        const utcDate = new Date(entry.timestamp + 'Z'); // Add 'Z' to indicate UTC
+        const localTime = utcDate.toLocaleString('en-AU', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        
+        return {
+          ...entry,
+          time: localTime,
+          timestamp: entry.timestamp, // Keep original for reference
+        };
+      });
 
       setHistory(parsed);
     } catch (err) {
