@@ -53,7 +53,8 @@ Connect BME280 sensor to Raspberry Pi as follows:
 
 ### Running the Backend API
 Create a systemd service to run the Flask app using gunicorn:
-```ini /etc/systemd/system/dashboard-api.service
+`/etc/systemd/system/dashboard-api.service`
+```ini
 [Unit]
 Description=Gunicorn instance to serve dashboard_api
 After=network.target
@@ -77,7 +78,8 @@ sudo systemctl enable dashboard-api
 ```
 
 Create an nginx config to run API on /api:
-```nginx /etc/nginx/sites-available/sensor-dashboard
+`/etc/nginx/sites-available/sensor-dashboard`
+```nginx
 server {
     listen 80;
     server_name _;
