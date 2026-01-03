@@ -9,12 +9,27 @@ import {
 } from "recharts";
 import "./App.css";
 
+const DEFAULT_SETTINGS = {
+  temperatureUnit: 'C',
+  pressureUnit: 'hPa',
+  decimalPlaces: {
+    temperature: 2,
+    humidity: 1,
+    pressure: 2
+  }
+};
+
 export default function App() {
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('weatherSettings');
+    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+  });
 
   const fetchCurrent = async () => {
     try {
@@ -85,6 +100,26 @@ export default function App() {
     return date.toLocaleTimeString();
   };
 
+  const saveSettings = (newSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem('weatherSettings', JSON.stringify(newSettings));
+  };
+
+  const convertTemperature = (celsius) => {
+    if (celsius === undefined || celsius === null) return null;
+    if (settings.temperatureUnit === 'C') return celsius;
+    if (settings.temperatureUnit === 'F') return (celsius * 9/5) + 32;
+    if (settings.temperatureUnit === 'K') return celsius + 273.15;
+    return celsius;
+  };
+
+  const convertPressure = (hpa) => {
+    if (hpa === undefined || hpa === null) return null;
+    if (settings.pressureUnit === 'hPa') return hpa;
+    if (settings.pressureUnit === 'Pa') return hpa * 100;
+    return hpa;
+  };
+
   return (
     <div className="app">
       <div className="header">
@@ -93,6 +128,13 @@ export default function App() {
           <div className="last-update">
             Last update: {formatLastUpdate(lastUpdate)}
           </div>
+          <button 
+            className="settings-btn"
+            onClick={() => setShowSettings(!showSettings)}
+            title="Settings"
+          >
+            ⚙️
+          </button>
           <button 
             className={`refresh-btn ${loading ? 'loading' : ''}`}
             onClick={handleRefresh}
@@ -110,28 +152,73 @@ export default function App() {
         </div>
       )}
 
+      {showSettings && (
+        <SettingsModal settings={settings} onSave={(newSettings) => {
+          saveSettings(newSettings);
+          setShowSettings(false);
+        }} onClose={() => setShowSettings(false)} />
+      )}
+
       <div className="metrics">
-        <MetricCard title="Temperature" value={current?.temperature} unit="°C" />
-        <MetricCard title="Humidity" value={current?.humidity} unit="%" />
-        <MetricCard title="Pressure" value={current?.pressure} unit="hPa" />
+        <MetricCard 
+          title="Temperature" 
+          value={convertTemperature(current?.temperature)} 
+          unit={`°${settings.temperatureUnit}`}
+          decimalPlaces={settings.decimalPlaces.temperature}
+        />
+        <MetricCard 
+          title="Humidity" 
+          value={current?.humidity} 
+          unit="%" 
+          decimalPlaces={settings.decimalPlaces.humidity}
+        />
+        <MetricCard 
+          title="Pressure" 
+          value={convertPressure(current?.pressure)} 
+          unit={settings.pressureUnit}
+          decimalPlaces={settings.decimalPlaces.pressure}
+        />
       </div>
 
       <div className="charts">
-        <ChartCard title="Temperature History" data={history} dataKey="temperature" color="#ef4444" unit="°C" />
-        <ChartCard title="Humidity History" data={history} dataKey="humidity" color="#3b82f6" unit="%" />
-        <ChartCard title="Pressure History" data={history} dataKey="pressure" color="#10b981" unit="hPa" />
+        <ChartCard 
+          title="Temperature History" 
+          data={history} 
+          dataKey="temperature" 
+          color="#ef4444" 
+          unit={`°${settings.temperatureUnit}`}
+          convertValue={convertTemperature}
+          decimalPlaces={settings.decimalPlaces.temperature}
+        />
+        <ChartCard 
+          title="Humidity History" 
+          data={history} 
+          dataKey="humidity" 
+          color="#3b82f6" 
+          unit="%" 
+          decimalPlaces={settings.decimalPlaces.humidity}
+        />
+        <ChartCard 
+          title="Pressure History" 
+          data={history} 
+          dataKey="pressure" 
+          color="#10b981" 
+          unit={settings.pressureUnit}
+          convertValue={convertPressure}
+          decimalPlaces={settings.decimalPlaces.pressure}
+        />
       </div>
     </div>
   );
 }
 
-function MetricCard({ title, value, unit }) {
+function MetricCard({ title, value, unit, decimalPlaces }) {
   return (
     <div className="metric-card">
       <p className="metric-title">{title}</p>
       {value !== undefined && value !== null ? (
         <p className="metric-value">
-          {typeof value === 'number' ? value.toFixed(3) : value} <span>{unit}</span>
+          {typeof value === 'number' ? value.toFixed(decimalPlaces || 2) : value} <span>{unit}</span>
         </p>
       ) : (
         <div className="loading-skeleton" />
@@ -140,13 +227,18 @@ function MetricCard({ title, value, unit }) {
   );
 }
 
-function ChartCard({ title, data, dataKey, color, unit }) {
+function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPlaces }) {
+  const displayData = convertValue ? data.map(item => ({
+    ...item,
+    [dataKey]: convertValue(item[dataKey])
+  })) : data;
+
   return (
     <div className="chart-card">
       <h2>{title}</h2>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart data={displayData}>
             <XAxis 
               dataKey="time" 
               stroke="#64748b"
@@ -164,7 +256,7 @@ function ChartCard({ title, data, dataKey, color, unit }) {
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
                 color: '#f1f5f9'
               }}
-              formatter={(value) => [`${value.toFixed(1)} ${unit}`, title.replace(' History', '')]}
+              formatter={(value) => [`${value.toFixed(decimalPlaces || 1)} ${unit}`, title.replace(' History', '')]}
               labelStyle={{ color: '#cbd5e1' }}
             />
             <Line 
@@ -178,6 +270,132 @@ function ChartCard({ title, data, dataKey, color, unit }) {
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+function SettingsModal({ settings, onSave, onClose }) {
+  const [tempSettings, setTempSettings] = useState(settings);
+
+  const handleChange = (key, value) => {
+    setTempSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleDecimalChange = (metric, value) => {
+    setTempSettings(prev => ({
+      ...prev,
+      decimalPlaces: {
+        ...prev.decimalPlaces,
+        [metric]: Math.max(0, Math.min(5, parseInt(value) || 0))
+      }
+    }));
+  };
+
+  const handleReset = () => {
+    setTempSettings(DEFAULT_SETTINGS);
+  };
+
+  return (
+    <div className="settings-overlay" onClick={onClose}>
+      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="settings-header">
+          <h2>Settings</h2>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="settings-content">
+          <div className="settings-section">
+            <h3>Units</h3>
+            
+            <div className="setting-group">
+              <label>Temperature Unit</label>
+              <div className="radio-group">
+                {['C', 'F', 'K'].map(unit => (
+                  <label key={unit} className="radio-label">
+                    <input
+                      type="radio"
+                      name="temperature"
+                      value={unit}
+                      checked={tempSettings.temperatureUnit === unit}
+                      onChange={(e) => handleChange('temperatureUnit', e.target.value)}
+                    />
+                    <span>°{unit}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="setting-group">
+              <label>Pressure Unit</label>
+              <div className="radio-group">
+                {['hPa', 'Pa'].map(unit => (
+                  <label key={unit} className="radio-label">
+                    <input
+                      type="radio"
+                      name="pressure"
+                      value={unit}
+                      checked={tempSettings.pressureUnit === unit}
+                      onChange={(e) => handleChange('pressureUnit', e.target.value)}
+                    />
+                    <span>{unit}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>Decimal Places</h3>
+            
+            <div className="setting-group">
+              <label htmlFor="temp-decimals">Temperature</label>
+              <input
+                id="temp-decimals"
+                type="number"
+                min="0"
+                max="5"
+                value={tempSettings.decimalPlaces.temperature}
+                onChange={(e) => handleDecimalChange('temperature', e.target.value)}
+              />
+            </div>
+
+            <div className="setting-group">
+              <label htmlFor="humidity-decimals">Humidity</label>
+              <input
+                id="humidity-decimals"
+                type="number"
+                min="0"
+                max="5"
+                value={tempSettings.decimalPlaces.humidity}
+                onChange={(e) => handleDecimalChange('humidity', e.target.value)}
+              />
+            </div>
+
+            <div className="setting-group">
+              <label htmlFor="pressure-decimals">Pressure</label>
+              <input
+                id="pressure-decimals"
+                type="number"
+                min="0"
+                max="5"
+                value={tempSettings.decimalPlaces.pressure}
+                onChange={(e) => handleDecimalChange('pressure', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-footer">
+          <button className="btn-secondary" onClick={handleReset}>Reset to Default</button>
+          <div className="btn-group">
+            <button className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button className="btn-primary" onClick={() => onSave(tempSettings)}>Save</button>
+          </div>
+        </div>
       </div>
     </div>
   );
