@@ -357,7 +357,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                 id="temp-decimals"
                 type="number"
                 min="0"
-                max="5"
+                max="12"
                 value={tempSettings.decimalPlaces.temperature}
                 onChange={(e) => handleDecimalChange('temperature', e.target.value)}
               />
@@ -369,7 +369,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                 id="humidity-decimals"
                 type="number"
                 min="0"
-                max="5"
+                max="12"
                 value={tempSettings.decimalPlaces.humidity}
                 onChange={(e) => handleDecimalChange('humidity', e.target.value)}
               />
@@ -381,7 +381,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                 id="pressure-decimals"
                 type="number"
                 min="0"
-                max="5"
+                max="12"
                 value={tempSettings.decimalPlaces.pressure}
                 onChange={(e) => handleDecimalChange('pressure', e.target.value)}
               />
