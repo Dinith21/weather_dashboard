@@ -13,13 +13,17 @@ export default function App() {
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   const fetchCurrent = async () => {
     try {
+      setError(null);
       const res = await fetch("/api/sensor");
       if (!res.ok) throw new Error("Failed to fetch /api/sensor");
       const data = await res.json();
       setCurrent(data);
+      setLastUpdate(new Date());
     } catch (err) {
       setError(err.message);
     }
@@ -42,6 +46,12 @@ export default function App() {
     }
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    await Promise.all([fetchCurrent(), fetchHistory()]);
+    setLoading(false);
+  };
+
   useEffect(() => {
     fetchCurrent();
     fetchHistory();
@@ -50,13 +60,40 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  if (error) {
-    return <div className="error">Error: {error}</div>;
-  }
+  const formatLastUpdate = (date) => {
+    if (!date) return "Never";
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return "Just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return date.toLocaleTimeString();
+  };
 
   return (
     <div className="app">
-      <h1>Sensor Dashboard</h1>
+      <div className="header">
+        <h1>Weather Dashboard</h1>
+        <div className="header-right">
+          <div className="last-update">
+            Last update: {formatLastUpdate(lastUpdate)}
+          </div>
+          <button 
+            className={`refresh-btn ${loading ? 'loading' : ''}`}
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <span className="refresh-icon">⟳</span>
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="error">
+          ⚠️ {error}
+        </div>
+      )}
 
       <div className="metrics">
         <MetricCard title="Temperature" value={current?.temperature} unit="°C" />
@@ -77,9 +114,13 @@ function MetricCard({ title, value, unit }) {
   return (
     <div className="metric-card">
       <p className="metric-title">{title}</p>
-      <p className="metric-value">
-        {value ?? "--"} <span>{unit}</span>
-      </p>
+      {value !== undefined && value !== null ? (
+        <p className="metric-value">
+          {typeof value === 'number' ? value.toFixed(1) : value} <span>{unit}</span>
+        </p>
+      ) : (
+        <div className="loading-skeleton" />
+      )}
     </div>
   );
 }
@@ -93,29 +134,32 @@ function ChartCard({ title, data, dataKey, color, unit }) {
           <LineChart data={data}>
             <XAxis 
               dataKey="time" 
-              stroke="#6b7280"
+              stroke="#64748b"
               style={{ fontSize: '11px' }}
             />
             <YAxis 
-              stroke="#6b7280"
+              stroke="#64748b"
               style={{ fontSize: '11px' }}
             />
             <Tooltip 
               contentStyle={{
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                border: '1px solid rgba(96, 165, 250, 0.3)',
+                borderRadius: '12px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                color: '#f1f5f9'
               }}
-              formatter={(value) => [`${value} ${unit}`, title.replace(' History', '')]}
+              formatter={(value) => [`${value.toFixed(1)} ${unit}`, title.replace(' History', '')]}
+              labelStyle={{ color: '#cbd5e1' }}
             />
             <Line 
               type="monotone" 
               dataKey={dataKey}
               stroke={color}
               strokeWidth={3}
-              dot={{ fill: color, r: 3 }}
-              activeDot={{ r: 5 }}
+              dot={{ fill: color, r: 4 }}
+              activeDot={{ r: 6 }}
+              isAnimationActive={true}
             />
           </LineChart>
         </ResponsiveContainer>
