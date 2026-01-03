@@ -116,7 +116,7 @@ function MetricCard({ title, value, unit }) {
       <p className="metric-title">{title}</p>
       {value !== undefined && value !== null ? (
         <p className="metric-value">
-          {typeof value === 'number' ? value.toFixed(1) : value} <span>{unit}</span>
+          {typeof value === 'number' ? value.toFixed(3) : value} <span>{unit}</span>
         </p>
       ) : (
         <div className="loading-skeleton" />
