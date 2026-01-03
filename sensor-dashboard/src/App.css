@@ -167,7 +167,6 @@ h1 {
 .metric-value {
   font-size: 52px;
   font-weight: 800;
-  color: #e5e7eb;
   background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -179,6 +178,8 @@ h1 {
 }
 
 .metric-value span {
+  color: #e5e7eb;
+  -webkit-text-fill-color: #e5e7eb;
   font-size: 22px;
   font-weight: 600;
   opacity: 0.8;
