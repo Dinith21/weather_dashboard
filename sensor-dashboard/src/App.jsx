@@ -290,7 +290,7 @@ function SettingsModal({ settings, onSave, onClose }) {
       ...prev,
       decimalPlaces: {
         ...prev.decimalPlaces,
-        [metric]: Math.max(0, Math.min(5, parseInt(value) || 0))
+        [metric]: Math.max(0, Math.min(12, parseInt(value) || 0))
       }
     }));
   };
