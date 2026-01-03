@@ -14,7 +14,7 @@ A full-stack weather monitoring application featuring a Raspberry Pi backend API
 - Interactive web dashboard
 - Persistent data logging
 
-## Getting Started
+## Raspberry Pi Setup
 
 ### Prerequisites
 
@@ -22,22 +22,14 @@ A full-stack weather monitoring application featuring a Raspberry Pi backend API
 - Node.js (frontend)
 - BME280 sensor
 
-<!-- ### Installation
-
-**Backend:**
+### Install python dependencies in virtual environment
 ```bash
-cd dashboard_api
+python3 -m venv venv
+source venv/bin/activate
+cd weather_dashboard/dashboard_api
 pip install -r requirements.txt
 ```
 
-**Frontend:**
-```bash
-cd sensor-dashboard
-npm install
-npm run dev
-``` -->
-
-## Raspberry Pi Setup
 ### Install npm and dependencies
 ```bash
 cd weather_dashboard/sensor-dashboard
@@ -52,7 +44,7 @@ Connect BME280 sensor to Raspberry Pi as follows:
 - **SCL**: GPIO 3 (SCL)
 
 ### Running the Backend API
-Create a systemd service to run the Flask app using gunicorn:
+Create a systemd service to run the Flask app using gunicorn:  
 `/etc/systemd/system/dashboard-api.service`
 ```ini
 [Unit]
@@ -77,7 +69,7 @@ sudo systemctl start dashboard-api
 sudo systemctl enable dashboard-api
 ```
 
-Create an nginx config to run API on /api:
+Create an nginx config to run API on /api:  
 `/etc/nginx/sites-available/sensor-dashboard`
 ```nginx
 server {
