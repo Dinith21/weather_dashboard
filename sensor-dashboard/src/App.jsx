@@ -10,12 +10,12 @@ import {
 import "./App.css";
 
 const DEFAULT_SETTINGS = {
-  temperatureUnit: 'C',
+  temperatureUnit: '°C',
   pressureUnit: 'hPa',
   decimalPlaces: {
-    temperature: 2,
-    humidity: 1,
-    pressure: 2
+    temperature: 3,
+    humidity: 3,
+    pressure: 3
   }
 };
 
@@ -107,8 +107,8 @@ export default function App() {
 
   const convertTemperature = (celsius) => {
     if (celsius === undefined || celsius === null) return null;
-    if (settings.temperatureUnit === 'C') return celsius;
-    if (settings.temperatureUnit === 'F') return (celsius * 9/5) + 32;
+    if (settings.temperatureUnit === '°C') return celsius;
+    if (settings.temperatureUnit === '°F') return (celsius * 9/5) + 32;
     if (settings.temperatureUnit === 'K') return celsius + 273.15;
     return celsius;
   };
@@ -117,6 +117,7 @@ export default function App() {
     if (hpa === undefined || hpa === null) return null;
     if (settings.pressureUnit === 'hPa') return hpa;
     if (settings.pressureUnit === 'Pa') return hpa * 100;
+    if (settings.pressureUnit === 'atm') return hpa / 1013.25;
     return hpa;
   };
 
@@ -131,18 +132,17 @@ export default function App() {
           <button 
             className="settings-btn"
             onClick={() => setShowSettings(!showSettings)}
-            title="Settings"
           >
-            ⚙️
+            Settings
           </button>
-          <button 
+          {/* <button 
             className={`refresh-btn ${loading ? 'loading' : ''}`}
             onClick={handleRefresh}
             disabled={loading}
           >
             <span className="refresh-icon">⟳</span>
             {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -163,7 +163,7 @@ export default function App() {
         <MetricCard 
           title="Temperature" 
           value={convertTemperature(current?.temperature)} 
-          unit={`°${settings.temperatureUnit}`}
+          unit={settings.temperatureUnit}
           decimalPlaces={settings.decimalPlaces.temperature}
         />
         <MetricCard 
@@ -332,7 +332,7 @@ function SettingsModal({ settings, onSave, onClose }) {
             <div className="setting-group">
               <label>Pressure Unit</label>
               <div className="radio-group">
-                {['hPa', 'Pa'].map(unit => (
+                {['hPa', 'Pa', 'atm'].map(unit => (
                   <label key={unit} className="radio-label">
                     <input
                       type="radio"
