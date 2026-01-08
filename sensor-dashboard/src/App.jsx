@@ -107,7 +107,7 @@ export default function App() {
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
     
-    if (seconds < 60) return "Just now";
+    if (seconds < 5) return "Just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     return date.toLocaleTimeString();
   };
@@ -145,7 +145,6 @@ export default function App() {
     if (hpa === undefined || hpa === null) return null;
     if (settings.pressureUnit === 'hPa') return hpa;
     if (settings.pressureUnit === 'Pa') return hpa * 100;
-    if (settings.pressureUnit === 'atm') return hpa / 1013.25;
     return hpa;
   };
 
@@ -305,11 +304,26 @@ function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPla
     .map(item => item[dataKey])
     .filter(v => Number.isFinite(v));
 
+  // Round automatic Y bounds to whole numbers so the axis ticks look cleaner
+  const roundDomainToWhole = (domain) => {
+    const [min, max] = domain;
+    const hasMin = Number.isFinite(min);
+    const hasMax = Number.isFinite(max);
+    if (!hasMin || !hasMax) return domain;
+
+    if (min === max) {
+      const value = Math.round(min);
+      return [value - 1, value + 1];
+    }
+
+    return [Math.floor(min), Math.ceil(max)];
+  };
+
   const autoYDomain = yValues.length
     ? [Math.min(...yValues), Math.max(...yValues)]
     : ['auto', 'auto'];
 
-  const baseYDomain = autoYDomain;
+  const baseYDomain = roundDomainToWhole(autoYDomain);
   const resolvedYDomain = [
     yMinValue !== undefined ? yMinValue : baseYDomain[0] ?? 'auto',
     yMaxValue !== undefined ? yMaxValue : baseYDomain[1] ?? 'auto',
@@ -500,7 +514,7 @@ function SettingsModal({ settings, onSave, onClose }) {
             <div className="setting-group">
               <label>Pressure Unit</label>
               <div className="radio-group">
-                {['hPa', 'Pa', 'atm'].map(unit => (
+                {['hPa', 'Pa'].map(unit => (
                   <label key={unit} className="radio-label">
                     <input
                       type="radio"
