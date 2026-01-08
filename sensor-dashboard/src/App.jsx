@@ -19,6 +19,12 @@ const DEFAULT_SETTINGS = {
   }
 };
 
+const DEFAULT_AXIS_SETTINGS = {
+  temperature: { xMin: '', xMax: '', yMin: '', yMax: '' },
+  humidity: { xMin: '', xMax: '', yMin: '', yMax: '' },
+  pressure: { xMin: '', xMax: '', yMin: '', yMax: '' }
+};
+
 export default function App() {
   const [current, setCurrent] = useState(null);
   const [history, setHistory] = useState([]);
@@ -26,6 +32,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [axisSettings, setAxisSettings] = useState(() => {
+    const saved = localStorage.getItem('chartAxisSettings');
+    return saved ? JSON.parse(saved) : DEFAULT_AXIS_SETTINGS;
+  });
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('weatherSettings');
     return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
@@ -54,6 +64,7 @@ export default function App() {
         // Parse UTC timestamp and convert to local time
         // API returns: "2025-12-29 21:00:02"
         const utcDate = new Date(entry.timestamp + 'Z'); // Add 'Z' to indicate UTC
+        const timestampMs = utcDate.getTime();
         const localTime = utcDate.toLocaleString('en-AU', {
           year: 'numeric',
           month: '2-digit',
@@ -67,6 +78,7 @@ export default function App() {
           ...entry,
           time: localTime,
           timestamp: entry.timestamp, // Keep original for reference
+          timestampMs,
         };
       });
 
@@ -103,6 +115,22 @@ export default function App() {
   const saveSettings = (newSettings) => {
     setSettings(newSettings);
     localStorage.setItem('weatherSettings', JSON.stringify(newSettings));
+  };
+
+  const updateAxisSettings = (chartKey, updates) => {
+    setAxisSettings(prev => {
+      const next = {
+        ...prev,
+        [chartKey]: {
+          ...DEFAULT_AXIS_SETTINGS[chartKey],
+          ...prev[chartKey],
+          ...updates,
+        },
+      };
+
+      localStorage.setItem('chartAxisSettings', JSON.stringify(next));
+      return next;
+    });
   };
 
   const convertTemperature = (celsius) => {
@@ -186,9 +214,11 @@ export default function App() {
           data={history} 
           dataKey="temperature" 
           color="#ef4444" 
-          unit={`°${settings.temperatureUnit}`}
+          unit={settings.temperatureUnit}
           convertValue={convertTemperature}
           decimalPlaces={settings.decimalPlaces.temperature}
+          axisSettings={axisSettings.temperature}
+          onUpdateAxisSettings={(updates) => updateAxisSettings('temperature', updates)}
         />
         <ChartCard 
           title="Humidity History" 
@@ -197,6 +227,8 @@ export default function App() {
           color="#3b82f6" 
           unit="%" 
           decimalPlaces={settings.decimalPlaces.humidity}
+          axisSettings={axisSettings.humidity}
+          onUpdateAxisSettings={(updates) => updateAxisSettings('humidity', updates)}
         />
         <ChartCard 
           title="Pressure History" 
@@ -206,6 +238,8 @@ export default function App() {
           unit={settings.pressureUnit}
           convertValue={convertPressure}
           decimalPlaces={settings.decimalPlaces.pressure}
+          axisSettings={axisSettings.pressure}
+          onUpdateAxisSettings={(updates) => updateAxisSettings('pressure', updates)}
         />
       </div>
     </div>
@@ -227,37 +261,151 @@ function MetricCard({ title, value, unit, decimalPlaces }) {
   );
 }
 
-function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPlaces }) {
+function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPlaces, axisSettings, onUpdateAxisSettings }) {
   const displayData = convertValue ? data.map(item => ({
     ...item,
     [dataKey]: convertValue(item[dataKey])
   })) : data;
-  const isPressureChart = dataKey === 'pressure';
-  const pressureDomain = isPressureChart
-    ? (unit === 'hPa'
-        ? [900, 1100]
-        : unit === 'Pa'
-          ? [900 * 100, 1100 * 100]
-          : unit === 'atm'
-            ? [900 / 1013.25, 1100 / 1013.25]
-            : undefined)
-    : undefined;
+
+
+  const safeAxisSettings = axisSettings || { xMin: '', xMax: '', yMin: '', yMax: '' };
+  const [showAxisSettings, setShowAxisSettings] = useState(false);
+
+  const parseDateInput = (value) => {
+    if (!value) return undefined;
+    const ms = new Date(value).getTime();
+    return Number.isFinite(ms) ? ms : undefined;
+  };
+
+  const parseNumberInput = (value) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    const num = Number(value);
+    return Number.isFinite(num) ? num : undefined;
+  };
+
+  const xMinMs = parseDateInput(safeAxisSettings.xMin);
+  const xMaxMs = parseDateInput(safeAxisSettings.xMax);
+  const yMinValue = parseNumberInput(safeAxisSettings.yMin);
+  const yMaxValue = parseNumberInput(safeAxisSettings.yMax);
+
+  const timestamps = displayData
+    .map(item => item.timestampMs)
+    .filter(ts => Number.isFinite(ts));
+
+  const autoXDomain = timestamps.length
+    ? [Math.min(...timestamps), Math.max(...timestamps)]
+    : ['auto', 'auto'];
+
+  const xDomainFromSettings = [xMinMs ?? 'auto', xMaxMs ?? 'auto'];
+  const resolvedXDomain = (xMinMs !== undefined || xMaxMs !== undefined)
+    ? xDomainFromSettings
+    : autoXDomain;
+
+  const baseYDomain = pressureDomain || ['auto', 'auto'];
+  const resolvedYDomain = [
+    yMinValue !== undefined ? yMinValue : baseYDomain[0] ?? 'auto',
+    yMaxValue !== undefined ? yMaxValue : baseYDomain[1] ?? 'auto',
+  ];
+
+  const timeFormatter = (value) => {
+    if (!Number.isFinite(value)) return '';
+    return new Date(value).toLocaleString('en-AU', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
+  const handleAxisChange = (key, value) => {
+    onUpdateAxisSettings({ [key]: value });
+  };
+
+  const handleReset = () => {
+    onUpdateAxisSettings({ xMin: '', xMax: '', yMin: '', yMax: '' });
+  };
 
   return (
     <div className="chart-card">
-      <h2>{title}</h2>
+      <div className="chart-card-header">
+        <h2>{title}</h2>
+        <button
+          className="axis-settings-btn"
+          onClick={() => setShowAxisSettings(prev => !prev)}
+          aria-expanded={showAxisSettings}
+        >
+          Axis Settings
+        </button>
+      </div>
+
+      {showAxisSettings && (
+        <div className="axis-settings">
+          <div className="axis-row">
+            <div className="axis-field">
+              <label htmlFor={`${dataKey}-xmin`}>X min</label>
+              <input
+                id={`${dataKey}-xmin`}
+                type="datetime-local"
+                value={safeAxisSettings.xMin || ''}
+                onChange={(e) => handleAxisChange('xMin', e.target.value)}
+              />
+            </div>
+            <div className="axis-field">
+              <label htmlFor={`${dataKey}-xmax`}>X max</label>
+              <input
+                id={`${dataKey}-xmax`}
+                type="datetime-local"
+                value={safeAxisSettings.xMax || ''}
+                onChange={(e) => handleAxisChange('xMax', e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="axis-row">
+            <div className="axis-field">
+              <label htmlFor={`${dataKey}-ymin`}>Y min</label>
+              <input
+                id={`${dataKey}-ymin`}
+                type="number"
+                value={safeAxisSettings.yMin ?? ''}
+                onChange={(e) => handleAxisChange('yMin', e.target.value)}
+                placeholder={baseYDomain[0] ?? 'auto'}
+              />
+            </div>
+            <div className="axis-field">
+              <label htmlFor={`${dataKey}-ymax`}>Y max</label>
+              <input
+                id={`${dataKey}-ymax`}
+                type="number"
+                value={safeAxisSettings.yMax ?? ''}
+                onChange={(e) => handleAxisChange('yMax', e.target.value)}
+                placeholder={baseYDomain[1] ?? 'auto'}
+              />
+            </div>
+          </div>
+          <div className="axis-actions">
+            <button className="btn-secondary" onClick={handleReset}>Reset to auto</button>
+          </div>
+        </div>
+      )}
+
       <div className="chart-container">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={displayData}>
+          <LineChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
             <XAxis 
-              dataKey="time" 
+              dataKey="timestampMs"
+              type="number"
+              domain={resolvedXDomain}
+              tickFormatter={timeFormatter}
               stroke="#64748b"
               style={{ fontSize: '11px' }}
+              allowDataOverflow
             />
             <YAxis 
               stroke="#64748b"
               style={{ fontSize: '11px' }}
-              domain={pressureDomain}
+              domain={resolvedYDomain}
+              allowDataOverflow
             />
             <Tooltip 
               contentStyle={{
@@ -268,6 +416,7 @@ function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPla
                 color: '#f1f5f9'
               }}
               formatter={(value) => [`${value.toFixed(decimalPlaces || 1)} ${unit}`, title.replace(' History', '')]}
+              labelFormatter={timeFormatter}
               labelStyle={{ color: '#cbd5e1' }}
             />
             <Line 
