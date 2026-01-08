@@ -301,7 +301,15 @@ function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPla
     ? xDomainFromSettings
     : autoXDomain;
 
-  const baseYDomain = pressureDomain || ['auto', 'auto'];
+  const yValues = displayData
+    .map(item => item[dataKey])
+    .filter(v => Number.isFinite(v));
+
+  const autoYDomain = yValues.length
+    ? [Math.min(...yValues), Math.max(...yValues)]
+    : ['auto', 'auto'];
+
+  const baseYDomain = autoYDomain;
   const resolvedYDomain = [
     yMinValue !== undefined ? yMinValue : baseYDomain[0] ?? 'auto',
     yMaxValue !== undefined ? yMaxValue : baseYDomain[1] ?? 'auto',
