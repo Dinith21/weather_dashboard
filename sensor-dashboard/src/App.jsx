@@ -232,6 +232,16 @@ function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPla
     ...item,
     [dataKey]: convertValue(item[dataKey])
   })) : data;
+  const isPressureChart = dataKey === 'pressure';
+  const pressureDomain = isPressureChart
+    ? (unit === 'hPa'
+        ? [900, 1100]
+        : unit === 'Pa'
+          ? [900 * 100, 1100 * 100]
+          : unit === 'atm'
+            ? [900 / 1013.25, 1100 / 1013.25]
+            : undefined)
+    : undefined;
 
   return (
     <div className="chart-card">
@@ -247,6 +257,7 @@ function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPla
             <YAxis 
               stroke="#64748b"
               style={{ fontSize: '11px' }}
+              domain={pressureDomain}
             />
             <Tooltip 
               contentStyle={{
