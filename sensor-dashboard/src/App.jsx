@@ -16,6 +16,11 @@ const DEFAULT_SETTINGS = {
     temperature: 3,
     humidity: 3,
     pressure: 3
+  },
+  calibration: {
+    temperature: { scale: 1, offset: 0 },
+    humidity: { scale: 1, offset: 0 },
+    pressure: { scale: 1, offset: 0 }
   }
 };
 
@@ -38,7 +43,19 @@ export default function App() {
   });
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('weatherSettings');
-    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    const base = saved ? JSON.parse(saved) : {};
+    return {
+      ...DEFAULT_SETTINGS,
+      ...base,
+      decimalPlaces: {
+        ...DEFAULT_SETTINGS.decimalPlaces,
+        ...(base.decimalPlaces || {})
+      },
+      calibration: {
+        ...DEFAULT_SETTINGS.calibration,
+        ...(base.calibration || {})
+      }
+    };
   });
 
   const fetchCurrent = async () => {
@@ -148,6 +165,28 @@ export default function App() {
     return hpa;
   };
 
+  const applyCalibration = (metricKey, value) => {
+    if (value === undefined || value === null) return null;
+    const calib = settings.calibration?.[metricKey] || { scale: 1, offset: 0 };
+    const scale = Number.isFinite(calib.scale) ? calib.scale : 1;
+    const offset = Number.isFinite(calib.offset) ? calib.offset : 0;
+    return (value * scale) + offset;
+  };
+
+  const getTemperatureDisplay = (rawCelsius) => {
+    const calibrated = applyCalibration('temperature', rawCelsius);
+    return convertTemperature(calibrated);
+  };
+
+  const getHumidityDisplay = (rawHumidity) => {
+    return applyCalibration('humidity', rawHumidity);
+  };
+
+  const getPressureDisplay = (rawHpa) => {
+    const calibrated = applyCalibration('pressure', rawHpa);
+    return convertPressure(calibrated);
+  };
+
   return (
     <div className="app">
       <div className="header">
@@ -189,19 +228,19 @@ export default function App() {
       <div className="metrics">
         <MetricCard 
           title="Temperature" 
-          value={convertTemperature(current?.temperature)} 
+          value={getTemperatureDisplay(current?.temperature)} 
           unit={settings.temperatureUnit}
           decimalPlaces={settings.decimalPlaces.temperature}
         />
         <MetricCard 
           title="Humidity" 
-          value={current?.humidity} 
+          value={getHumidityDisplay(current?.humidity)} 
           unit="%" 
           decimalPlaces={settings.decimalPlaces.humidity}
         />
         <MetricCard 
           title="Pressure" 
-          value={convertPressure(current?.pressure)} 
+          value={getPressureDisplay(current?.pressure)} 
           unit={settings.pressureUnit}
           decimalPlaces={settings.decimalPlaces.pressure}
         />
@@ -214,7 +253,7 @@ export default function App() {
           dataKey="temperature" 
           color="#ef4444" 
           unit={settings.temperatureUnit}
-          convertValue={convertTemperature}
+          convertValue={getTemperatureDisplay}
           decimalPlaces={settings.decimalPlaces.temperature}
           axisSettings={axisSettings.temperature}
           onUpdateAxisSettings={(updates) => updateAxisSettings('temperature', updates)}
@@ -225,6 +264,7 @@ export default function App() {
           dataKey="humidity" 
           color="#3b82f6" 
           unit="%" 
+          convertValue={getHumidityDisplay}
           decimalPlaces={settings.decimalPlaces.humidity}
           axisSettings={axisSettings.humidity}
           onUpdateAxisSettings={(updates) => updateAxisSettings('humidity', updates)}
@@ -235,7 +275,7 @@ export default function App() {
           dataKey="pressure" 
           color="#10b981" 
           unit={settings.pressureUnit}
-          convertValue={convertPressure}
+          convertValue={getPressureDisplay}
           decimalPlaces={settings.decimalPlaces.pressure}
           axisSettings={axisSettings.pressure}
           onUpdateAxisSettings={(updates) => updateAxisSettings('pressure', updates)}
@@ -568,6 +608,142 @@ function SettingsModal({ settings, onSave, onClose }) {
                 value={tempSettings.decimalPlaces.pressure}
                 onChange={(e) => handleDecimalChange('pressure', e.target.value)}
               />
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>Calibration</h3>
+
+            <div className="setting-group">
+              <label>Temperature</label>
+              <div className="axis-row">
+                <div className="axis-field">
+                  <label htmlFor="temp-scale">Scale</label>
+                  <input
+                    id="temp-scale"
+                    type="number"
+                    step="any"
+                    value={tempSettings.calibration?.temperature?.scale ?? 1}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      calibration: {
+                        ...prev.calibration,
+                        temperature: {
+                          ...prev.calibration?.temperature,
+                          scale: Number.isFinite(parseFloat(e.target.value)) ? parseFloat(e.target.value) : 1
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div className="axis-field">
+                  <label htmlFor="temp-offset">Offset</label>
+                  <input
+                    id="temp-offset"
+                    type="number"
+                    step="any"
+                    value={tempSettings.calibration?.temperature?.offset ?? 0}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      calibration: {
+                        ...prev.calibration,
+                        temperature: {
+                          ...prev.calibration?.temperature,
+                          offset: Number.isFinite(parseFloat(e.target.value)) ? parseFloat(e.target.value) : 0
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="setting-group">
+              <label>Humidity</label>
+              <div className="axis-row">
+                <div className="axis-field">
+                  <label htmlFor="humidity-scale">Scale</label>
+                  <input
+                    id="humidity-scale"
+                    type="number"
+                    step="any"
+                    value={tempSettings.calibration?.humidity?.scale ?? 1}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      calibration: {
+                        ...prev.calibration,
+                        humidity: {
+                          ...prev.calibration?.humidity,
+                          scale: Number.isFinite(parseFloat(e.target.value)) ? parseFloat(e.target.value) : 1
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div className="axis-field">
+                  <label htmlFor="humidity-offset">Offset</label>
+                  <input
+                    id="humidity-offset"
+                    type="number"
+                    step="any"
+                    value={tempSettings.calibration?.humidity?.offset ?? 0}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      calibration: {
+                        ...prev.calibration,
+                        humidity: {
+                          ...prev.calibration?.humidity,
+                          offset: Number.isFinite(parseFloat(e.target.value)) ? parseFloat(e.target.value) : 0
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="setting-group">
+              <label>Pressure</label>
+              <div className="axis-row">
+                <div className="axis-field">
+                  <label htmlFor="pressure-scale">Scale</label>
+                  <input
+                    id="pressure-scale"
+                    type="number"
+                    step="any"
+                    value={tempSettings.calibration?.pressure?.scale ?? 1}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      calibration: {
+                        ...prev.calibration,
+                        pressure: {
+                          ...prev.calibration?.pressure,
+                          scale: Number.isFinite(parseFloat(e.target.value)) ? parseFloat(e.target.value) : 1
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+                <div className="axis-field">
+                  <label htmlFor="pressure-offset">Offset</label>
+                  <input
+                    id="pressure-offset"
+                    type="number"
+                    step="any"
+                    value={tempSettings.calibration?.pressure?.offset ?? 0}
+                    onChange={(e) => setTempSettings(prev => ({
+                      ...prev,
+                      calibration: {
+                        ...prev.calibration,
+                        pressure: {
+                          ...prev.calibration?.pressure,
+                          offset: Number.isFinite(parseFloat(e.target.value)) ? parseFloat(e.target.value) : 0
+                        }
+                      }
+                    }))}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
