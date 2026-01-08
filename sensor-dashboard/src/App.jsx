@@ -430,6 +430,7 @@ function ChartCard({ title, data, dataKey, color, unit, convertValue, decimalPla
               allowDataOverflow
             />
             <Tooltip 
+              wrapperStyle={{ zIndex: 1000 }}
               contentStyle={{
                 backgroundColor: 'rgba(15, 23, 42, 0.95)',
                 border: '1px solid rgba(96, 165, 250, 0.3)',
