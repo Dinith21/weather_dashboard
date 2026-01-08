@@ -622,7 +622,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <input
                     id="temp-scale"
                     type="number"
-                    step="any"
+                    step="0.1"
                     value={tempSettings.calibration?.temperature?.scale ?? 1}
                     onChange={(e) => setTempSettings(prev => ({
                       ...prev,
@@ -641,7 +641,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <input
                     id="temp-offset"
                     type="number"
-                    step="any"
+                    step="0.1"
                     value={tempSettings.calibration?.temperature?.offset ?? 0}
                     onChange={(e) => setTempSettings(prev => ({
                       ...prev,
@@ -666,7 +666,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <input
                     id="humidity-scale"
                     type="number"
-                    step="any"
+                    step="0.1"
                     value={tempSettings.calibration?.humidity?.scale ?? 1}
                     onChange={(e) => setTempSettings(prev => ({
                       ...prev,
@@ -685,7 +685,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <input
                     id="humidity-offset"
                     type="number"
-                    step="any"
+                    step="0.1"
                     value={tempSettings.calibration?.humidity?.offset ?? 0}
                     onChange={(e) => setTempSettings(prev => ({
                       ...prev,
@@ -710,7 +710,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <input
                     id="pressure-scale"
                     type="number"
-                    step="any"
+                    step="0.1"
                     value={tempSettings.calibration?.pressure?.scale ?? 1}
                     onChange={(e) => setTempSettings(prev => ({
                       ...prev,
@@ -729,7 +729,7 @@ function SettingsModal({ settings, onSave, onClose }) {
                   <input
                     id="pressure-offset"
                     type="number"
-                    step="any"
+                    step="0.1"
                     value={tempSettings.calibration?.pressure?.offset ?? 0}
                     onChange={(e) => setTempSettings(prev => ({
                       ...prev,
