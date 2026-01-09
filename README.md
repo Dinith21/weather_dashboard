@@ -22,6 +22,11 @@ A full-stack weather monitoring application featuring a Raspberry Pi backend API
 - Node.js (frontend)
 - BME280 sensor
 
+### Clone this repository
+```bash
+git clone https://github.com/Dinith21/weather_dashboard.git
+```
+
 ### Install python dependencies in virtual environment
 ```bash
 python3 -m venv venv
@@ -40,8 +45,10 @@ npm install
 Connect BME280 sensor to Raspberry Pi as follows:
 - **GND**: Ground (Pin 6)
 - **3.3V**: 3V3 Power (Pin 1)
-- **SDA**: GPIO 2 (SDA) 
-- **SCL**: GPIO 3 (SCL)
+- **SDA**: GPIO 2 - SDA (Pin 3) 
+- **SCL**: GPIO 3 - SCL (Pin 5)
+
+3D Print Case for BME280 and place sensor inside to protect it.
 
 ### Running the Backend API
 Create a crontab job to update the sensor data every hour:
