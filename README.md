@@ -50,6 +50,17 @@ Connect BME280 sensor to Raspberry Pi as follows:
 
 3D Print Case for BME280 and place sensor inside to protect it.
 
+### Enable I2C on the Raspberry Pi
+Open the raspberry pi config:
+```bash
+sudo raspi-config
+```
+Select `3. Interface Options`, then `I5. I2C`, then enable by clicking `Yes`.  
+Reboot the raspberry pi.
+```bash
+sudo reboot
+```
+
 ### Running the Backend API
 Create a crontab job to update the sensor data every hour:
 ```bash
@@ -84,7 +95,7 @@ sudo systemctl start dashboard-api
 sudo systemctl enable dashboard-api
 ```
 
-Create an nginx config to run API on /api:  
+Create an nginx config to host the API at /api:  
 `/etc/nginx/sites-available/sensor-dashboard`
 ```nginx
 server {
@@ -112,3 +123,4 @@ Pull changes from GitHub and run React app using `deploy.sh` script:
 cd weather_dashboard
 ./deploy.sh
 ```
+Use this script to perform any updates to the frontend React app, after pushing changes to GitHub.
