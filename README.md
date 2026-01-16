@@ -35,7 +35,7 @@ cd weather_dashboard/dashboard_api
 pip install -r requirements.txt
 ```
 
-### Install npm and dependencies
+### Install npm dependencies
 ```bash
 cd weather_dashboard/sensor-dashboard
 npm install
@@ -93,6 +93,11 @@ Enable the service:
 sudo systemctl daemon-reload
 sudo systemctl start dashboard-api
 sudo systemctl enable dashboard-api
+```
+
+Install nginx:
+```bash
+sudo apt install nginx
 ```
 
 Create an nginx config to host the API at /api:  
