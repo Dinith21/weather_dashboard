@@ -101,7 +101,9 @@ sudo apt install nginx
 ```
 
 Create an nginx config to host the API at /api:  
-`/etc/nginx/sites-available/sensor-dashboard`
+```bash
+sudo nano /etc/nginx/sites-available/sensor-dashboard`
+```
 ```nginx
 server {
     listen 80;
@@ -122,8 +124,15 @@ server {
 }
 ```
 
+Enable the site in nginx:
+```bash
+sudo mkdir /var/www/sensor-dashboard
+sudo ln -s /etc/nginx/sites-available/sensor-dashboard /etc/nginx/sites-enabled
+sudo rm /etc/nginx/sites-enabled/default
+```
+
 ### Running the Application
-Pull changes from GitHub and run React app using `deploy.sh` script:
+Pull changes from GitHub and deploy the React app using the `deploy.sh` script:
 ```bash
 cd weather_dashboard
 ./deploy.sh
